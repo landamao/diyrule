@@ -95,11 +95,17 @@
                         "type": "bool",
                         "default": true
                     },
-                    "其他前缀跳过": {
-                        "description": "其他前缀跳过",
+                    "前缀跳过": {
+                        "description": "前缀跳过",
                         "hint": "如果文本以设置的前缀开头，则跳过处理，因为有些插件可能不使用/这种指令，而是直接用前缀响应，比如今日老婆插件",
                         "type": "list",
                         "default": []
+                    },
+                    "json跳过": {
+                        "description": "json跳过",
+                        "hint": "跳过处理外部分享，比如快手，哔哩哔哩",
+                        "type": "bool",
+                        "default": true
                     },
                     "含有跳过": {
                         "description": "含有跳过",

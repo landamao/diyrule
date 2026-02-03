@@ -1,7 +1,7 @@
 from astrbot.api.all import Star, EventMessageType, event_message_type, logger
 from astrbot.api.event import AstrMessageEvent
 from astrbot.core import AstrBotConfig
-from astrbot.core.message.components import At, Plain, Reply, Poke
+from astrbot.core.message.components import At, Plain, Reply, Poke, Json
 from astrbot.core.star import Context
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
@@ -57,6 +57,7 @@ class 群自定义规则(Star):
         if 群号 in self.l启用群号:  #先快速判断是否在设定的规则群号里
             唤醒 = False
             消息链 = event.get_messages()
+            logger.info(f"\n消息链：\n\n{消息链}\n\n")
             消息文本 = " ".join([seg.text for seg in 消息链 if isinstance(seg, Plain)]).strip()
 
             for 规则 in self.规则列表:
@@ -90,7 +91,10 @@ class 群自定义规则(Star):
                             logger.info('昵称唤醒')
                             唤醒 = True
 
-                        elif any( 消息文本.startswith(_) for _ in 规则['其他前缀跳过']):
+                        elif 规则['json跳过'] and isinstance(消息链[0], Json):
+                            return
+
+                        elif any( 消息文本.startswith(_) for _ in 规则['前缀跳过']):
                             return
 
                         elif any( _ in 消息文本 for _ in 规则['含有跳过']):
