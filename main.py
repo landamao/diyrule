@@ -66,17 +66,17 @@ class 群自定义规则(Star):
                         for 前缀 in self.l指令前缀:
                             if 消息文本.startswith(前缀):
                                 if event.is_admin(): return  #管理员不受影响
-                                指令文本 = 消息文本[len(前缀):]
+                                指令文本 = 消息文本[len(前缀):].split()[0]
                                 if 规则['禁用系统指令'] and 指令文本 in self.系统指令: event.stop_event(); return
                                 if 规则['禁用的指令']:
                                     if 规则['禁用的指令'][0].strip() == '0所有':
                                         event.stop_event(); return
-                                    elif any( 指令 in 指令文本 for 指令 in 规则['禁用的指令']):
+                                    elif any( 指令 == 指令文本 for 指令 in 规则['禁用的指令']):
                                         logger.info(f'指令{指令文本}已被禁用')
                                         event.stop_event(); return
                                 if 规则['启用的指令']:
                                     if 规则['启用的指令'][0].strip() == '0所有': return
-                                    elif any(指令 not in 指令文本 for 指令 in 规则['启用的指令']):
+                                    elif not any(指令 == 指令文本 for 指令 in 规则['启用的指令']):
                                         logger.info(f'已配置启用指令列表，但指令「{指令文本}」未在启用列表')
                                         event.stop_event(); return
                                 if 规则['禁前唤醒'] and 指令文本 not in self.l所有指令: event.stop_event(); return
