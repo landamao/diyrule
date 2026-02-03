@@ -57,7 +57,6 @@ class 群自定义规则(Star):
         if 群号 in self.l启用群号:  #先快速判断是否在设定的规则群号里
             唤醒 = False
             消息链 = event.get_messages()
-            logger.info(f"\n消息链：\n\n{消息链}\n\n")
             消息文本 = " ".join([seg.text for seg in 消息链 if isinstance(seg, Plain)]).strip()
 
             for 规则 in self.规则列表:
@@ -138,3 +137,4 @@ class 群自定义规则(Star):
                     l指令.append(i.group_name)
 
         return list(set(l指令))
+
