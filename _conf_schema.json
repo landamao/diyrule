@@ -1,0 +1,125 @@
+{
+    "指令前缀": {
+            "description": "指令前缀",
+            "hint": "你的配置文件中设置的指令前缀",
+            "type": "list",
+            "default": ["/"]
+    },
+    "额外指令": {
+            "description": "额外指令",
+            "hint": "针对可能没有扫描的指令，直接填指令名，不用加指令前缀",
+            "type": "list",
+            "default": []
+    },
+    "自定义规则": {
+        "description": "群聊自定义规则",
+        "type": "template_list",
+        "hint": "为每个群聊配置自定义规则，配置后只有符合以下规则才能唤起bot，未配置的将保持原本的默认配置",
+        "templates": {
+            "自定义": {
+                "name": "规则",
+                "items": {
+                    "备注": {
+                        "description": "备注",
+                        "hint": "仅备注用，填什么都可以",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "开关": {
+                        "description": "总开关",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "群号": {
+                        "description": "群号",
+                        "hint": "可多个群使用一个配置",
+                        "type": "list",
+                        "default": []
+                    },
+                    "艾特唤醒": {
+                        "description": "艾特唤醒",
+                        "hint": "是否开启唤醒",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "引用唤醒": {
+                        "description": "引用唤醒",
+                        "hint": "当其他人引用了bot的消息时是否唤醒",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "昵称唤醒": {
+                        "description": "昵称唤醒",
+                        "hint": "设置bot的昵称，消息中包含该昵称则唤醒",
+                        "type": "list",
+                        "default": []
+                    },
+                    "概率唤醒": {
+                        "description": "概率唤醒",
+                        "hint": "类似主动回复",
+                        "type": "float",
+                        "slider": {
+                            "min": 0,
+                            "max": 1,
+                            "step": 0.01
+                        },
+                        "default": 0
+                    },
+                    "禁用的指令": {
+                        "description": "禁用的指令，此项优先级高于启用的指令",
+                        "hint": "仅禁用的指令，留空则保持默认，填“0所有”则禁用所有，直接填指令名，不用加指令前缀，管理员不受影响",
+                        "type": "list",
+                        "default": []
+                    },
+                    "启用的指令": {
+                        "description": "启用的指令，此项优先级低于禁用的指令",
+                        "hint": "仅启用的指令，留空则保持默认，填“0所有”则启用所有，直接填指令名，不用加指令前缀，管理员不受影响",
+                        "type": "list",
+                        "default": []
+                    },
+                    "禁用系统指令": {
+                        "description": "禁用系统指令",
+                        "hint": "禁止使用系统指令，如/reset，/op，管理员不受影响",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "禁前唤醒": {
+                        "description": "禁止前缀唤醒llm",
+                        "hint": "当用户输入了错误的指令，如“/错误指令”，默认会唤醒llm，启用后禁止唤醒",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "放行戳一戳事件": {
+                        "description": "放行戳一戳事件",
+                        "hint": "放行戳一戳事件，你的其他插件可以会处理戳一戳事件，如果关闭，则其他插件将响应不到戳一戳事件",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "其他前缀跳过": {
+                        "description": "其他前缀跳过",
+                        "hint": "如果文本以设置的前缀开头，则跳过处理，因为有些插件可能不使用/这种指令，而是直接用前缀响应，比如今日老婆插件",
+                        "type": "list",
+                        "default": []
+                    },
+                    "含有跳过": {
+                        "description": "含有跳过",
+                        "hint": "消息中包含设置的字符，则跳过处理，可能其他插件需要",
+                        "type": "list",
+                        "default": []
+                    },
+                    "概率跳过": {
+                        "description": "概率跳过",
+                        "hint": "如果以上规则都没有唤起bot响应，则跳过这次事件处理，设为0则其余全部都阻止响应",
+                        "type": "float",
+                        "slider": {
+                            "min": 0,
+                            "max": 1,
+                            "step": 0.01
+                        },
+                        "default": 0
+                    }
+                }
+            }
+        }
+    }
+}
