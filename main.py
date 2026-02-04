@@ -76,7 +76,7 @@ class 群自定义规则(Star):
             for seg in 消息链:
                 if 规则['艾特唤醒'] and isinstance(seg, At) and str(seg.qq) == event.get_self_id():
                     #新增艾特指令处理
-                    if self.f指令屏蔽(规则, 消息文本, 禁前=False): return
+                    if self.f指令屏蔽(规则, 消息文本, 禁前=False): event.stop_event(); return
                     logger.info('触发了艾特唤醒')
                     唤醒 = True
                     break
@@ -135,6 +135,7 @@ class 群自定义规则(Star):
             return True
         else:
             return False
+
 
 
 
