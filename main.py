@@ -116,10 +116,13 @@ class 群自定义规则(Star):
         return list(set(l指令))
 
     def f指令屏蔽(self, 规则, 指令文本, 禁前 = True) -> bool:
+        logger.info(f"输入的指令：{指令文本}")
         if 规则['禁用系统指令'] and 指令文本 in self.系统指令: return True
         if 规则['禁用的指令']:
             if 规则['禁用的指令'][0].strip() == '0所有':
-                return True
+                if 禁前: return True
+                elif 指令文本 in self.l所有指令: return True
+                else: return False
             elif any(指令 == 指令文本 for 指令 in 规则['禁用的指令']):
                 logger.info(f'指令{指令文本}已被禁用')
                 return True
@@ -136,6 +139,4 @@ class 群自定义规则(Star):
         else:
             return False
 
-
-
-
+        return False
