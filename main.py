@@ -76,7 +76,7 @@ class 群自定义规则(Star):
             for seg in 消息链:
                 if 规则['艾特唤醒'] and isinstance(seg, At) and str(seg.qq) == event.get_self_id():
                     #新增艾特指令处理
-                    if self.f指令屏蔽(规则, 消息文本, 禁前=False): event.stop_event(); return
+                    if self.f指令屏蔽(规则, 消息文本.split()[0], 禁前=False): event.stop_event(); return
                     logger.info('触发了艾特唤醒')
                     唤醒 = True
                     break
@@ -87,7 +87,7 @@ class 群自定义规则(Star):
                 elif 规则['放行戳一戳事件'] and isinstance(seg, Poke):
                     跳过 = True
 
-                elif 规则['概率跳过'] and random.random() < 规则['概率跳过']:
+                elif 规则['概率跳过'] == 1.0 or 规则['概率跳过'] and random.random() < 规则['概率跳过']:
                     跳过 = True
 
         #应用唤醒
