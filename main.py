@@ -43,19 +43,19 @@ class 群自定义规则(Star):
 
     @event_message_type(EventMessageType.GROUP_MESSAGE, priority=999)
     async def 主函数(self, event: AstrMessageEvent):
-        群号 = event.get_group_id()
-        if 群号 in self.l启用群号:  #先快速判断是否在设定的规则群号里
-            if not (消息链 := event.get_messages()): return  #可能会出现消息链为空的情况
-            唤醒 = False
-            跳过 = False
-            消息文本 = " ".join([seg.text for seg in 消息链 if isinstance(seg, Plain)]).strip()
+        if not (消息链 := event.get_messages()): return  # 可能会出现消息链为空的情况
+        if (群号 := event.get_group_id()) not in self.l启用群号:  return  #先快速判断是否在设定的规则群号里
 
-            for 规则 in self.规则列表:
-                if  群号 in 规则['群号']: #找到该群号的规则
-                    break
-            else: return
+        for 规则 in self.规则列表:
+            if  群号 in 规则['群号']: #找到该群号的规则
+                break
         else: return
-            # 处理指令
+
+        唤醒 = False
+        跳过 = False
+        消息文本 = " ".join([seg.text for seg in 消息链 if isinstance(seg, Plain)]).strip()
+
+        # 处理指令
         for 前缀 in self.l指令前缀:
             if 消息文本.startswith(前缀):
                 if event.is_admin(): return  #管理员不受影响
