@@ -18,6 +18,8 @@ class 群自定义规则(Star):
         self.l指令前缀 = config['指令前缀']  #不需要用get，因为是配置的项
         self.规则列表 = config['自定义规则']
         self.l所有指令 = config['额外指令'].copy() #安全复制
+        self.l所有指令 = self.获取所有指令()  #原本重载时也要获取，不冲突
+        logger.warning(f"\n\n所有{len(self.l所有指令)}个指令：\n{self.l所有指令}\n\n")
 
         for 规则 in self.规则列表:
             规则['群号'] = [ j.strip() for j in 规则['群号'] ]
@@ -36,25 +38,8 @@ class 群自定义规则(Star):
     #更智能的扫描指令
     @filter.on_astrbot_loaded()
     async def f获取所有指令(self):
-        #遍历所有注册的处理器获取所有命令，包括别名
-        l指令 = []
-        for handler in star_handlers_registry:
-            for i in handler.event_filters:
-                if isinstance(i, CommandFilter):
-                    l指令.append(i.command_name)
-                    # 获取别名 - 属性名是 alias，类型是 set
-                    if hasattr(i, 'alias') and i.alias:  l指令.extend(list(i.alias))
-                elif isinstance(i, CommandGroupFilter):  l指令.append(i.group_name)
-        所有指令 = list(set(l指令 + self.l所有指令)); 中文指令 = []; 英文指令 = []
-        for 指令 in 所有指令:
-            if 指令 and '\u4e00' <= 指令[0] <= '\u9fff':  中文指令.append(指令)
-            else:  英文指令.append(指令)
-        # 排序
-        中文指令.sort(key=lambda x: lazy_pinyin(x)); 英文指令.sort(key=lambda x: x.lower())
-        # 合并列表
-        所有指令 = 中文指令 + 英文指令
-        self.l所有指令 = 所有指令
-        logger.warning(f"\n\n所有{len(self.l所有指令)}个指令：{self.l所有指令}\n\n")
+        self.l所有指令 = self.获取所有指令()
+        logger.warning(f"\n\n所有{len(self.l所有指令)}个指令：\n{self.l所有指令}\n\n")
 
     @event_message_type(EventMessageType.GROUP_MESSAGE, priority=999)
     async def 主函数(self, event: AstrMessageEvent):
@@ -151,3 +136,23 @@ class 群自定义规则(Star):
     async def f指令菜单(self, event: AstrMessageEvent):
         event.stop_event()
         yield event.plain_result('/' + '\n/'.join(self.l所有指令))
+
+    def 获取所有指令(self) -> list:
+        #遍历所有注册的处理器获取所有命令，包括别名
+        l指令 = []
+        for handler in star_handlers_registry:
+            for i in handler.event_filters:
+                if isinstance(i, CommandFilter):
+                    l指令.append(i.command_name)
+                    # 获取别名 - 属性名是 alias，类型是 set
+                    if hasattr(i, 'alias') and i.alias:  l指令.extend(list(i.alias))
+                elif isinstance(i, CommandGroupFilter):  l指令.append(i.group_name)
+        所有指令 = list(set(l指令 + self.l所有指令)); 中文指令 = []; 英文指令 = []
+        for 指令 in 所有指令:
+            if 指令 and '\u4e00' <= 指令[0] <= '\u9fff':  中文指令.append(指令)
+            else:  英文指令.append(指令)
+        # 排序
+        中文指令.sort(key=lambda x: lazy_pinyin(x)); 英文指令.sort(key=lambda x: x.lower())
+        # 合并列表
+        所有指令 = 中文指令 + 英文指令
+        return 所有指令
