@@ -15,7 +15,7 @@ class 群自定义规则(Star):
         super().__init__(context)
         self.context = context
         self.config = config
-        self.l指令前缀 = config['指令前缀']  #不需要用get，因为是配置的项
+        self.l指令前缀 = config['指令前缀'] or ['/'] #不需要用get，因为是配置的项
         self.规则列表 = config['自定义规则']
         self.l所有指令 = config['额外指令'].copy() #安全复制
         self.l所有指令 = self.获取所有指令()  #原本重载时也要获取，不冲突
@@ -59,7 +59,7 @@ class 群自定义规则(Star):
         for 前缀 in self.l指令前缀:
             if 消息文本.startswith(前缀):
                 if event.is_admin(): return  #管理员不受影响
-                指令文本 = 消息文本[len(前缀):].split()[0]
+                指令文本 = (消息文本[len(前缀):].split() or [''])[0]  #不知道什么原因抽风了，气死我了
                 if self.f指令屏蔽(规则, 指令文本): event.stop_event()
                 return
 
@@ -84,12 +84,78 @@ class 群自定义规则(Star):
             for seg in 消息链:
                 if 规则['艾特唤醒'] and isinstance(seg, At) and str(seg.qq) == event.get_self_id():
                     #新增艾特指令处理
-                    if self.f指令屏蔽(规则, 消息文本.split()[0], 禁前=False): event.stop_event(); return
+                    if self.f指令屏蔽((规则, 消息文本.split() or [''])[0], 禁前=False): event.stop_event(); return
                     logger.info('触发了艾特唤醒')
                     唤醒 = True
                     break
                 elif 规则['引用唤醒'] and isinstance(seg, Reply) and str(seg.sender_id) == event.get_self_id():
                     logger.info('触发了引用唤醒')
+                    唤醒 = True
+                    break
+                elif 规则['放行戳一戳事件'] and isinstance(seg, Poke):
+                    跳过 = True
+
+                elif 规则['概率跳过'] == 1.0 or 规则['概率跳过'] and random.random() < 规则['概率跳过']:
+                    跳过 = True
+
+        #应用唤醒
+        if 唤醒:
+            logger.info('此次唤醒')
+            event.is_at_or_wake_command = True
+        elif 跳过:
+            return
+        else:
+            event.stop_event()
+            return
+
+    def f指令屏蔽(self, 规则, 指令文本, 禁前 = True) -> bool:
+        if 规则['禁用系统指令'] and 指令文本 in self.系统指令: return True
+        if 规则['禁用的指令']:
+            if 规则['禁用的指令'][0].strip() == '0所有':
+                if 禁前: return True
+                elif 指令文本 in self.l所有指令: return True
+                else: return False
+            elif any(指令 == 指令文本 for 指令 in 规则['禁用的指令']):
+                logger.info(f'指令{指令文本}已被禁用')
+                return True
+        if 规则['启用的指令']:
+            if 规则['启用的指令'][0].strip() == '0所有':
+                return False
+            elif not any(指令 == 指令文本 for 指令 in 规则['启用的指令']):
+                logger.info(f'已配置启用指令列表，但指令「{指令文本}」未在启用列表')
+                return True
+
+        #禁前参数防止在艾特时即使不是指令也和前缀指令同时屏蔽，导致全部都屏蔽掉
+        if 禁前 and 规则['禁前唤醒'] and 指令文本 not in self.l所有指令:
+            return True
+        else:
+            return False
+
+    @filter.command("所有指令")
+    @filter.permission_type(filter.PermissionType.ADMIN, raise_error=False)
+    async def f指令菜单(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result('/' + '\n/'.join(self.l所有指令))
+
+    def 获取所有指令(self) -> list:
+        #遍历所有注册的处理器获取所有命令，包括别名
+        l指令 = []
+        for handler in star_handlers_registry:
+            for i in handler.event_filters:
+                if isinstance(i, CommandFilter):
+                    l指令.append(i.command_name)
+                    # 获取别名 - 属性名是 alias，类型是 set
+                    if hasattr(i, 'alias') and i.alias:  l指令.extend(list(i.alias))
+                elif isinstance(i, CommandGroupFilter):  l指令.append(i.group_name)
+        所有指令 = list(set(l指令 + self.l所有指令)); 中文指令 = []; 英文指令 = []
+        for 指令 in 所有指令:
+            if 指令 and '\u4e00' <= 指令[0] <= '\u9fff':  中文指令.append(指令)
+            else:  英文指令.append(指令)
+        # 排序
+        中文指令.sort(key=lambda x: lazy_pinyin(x)); 英文指令.sort(key=lambda x: x.lower())
+        # 合并列表
+        所有指令 = 中文指令 + 英文指令
+        return 所有指令                    logger.info('触发了引用唤醒')
                     唤醒 = True
                     break
                 elif 规则['放行戳一戳事件'] and isinstance(seg, Poke):
