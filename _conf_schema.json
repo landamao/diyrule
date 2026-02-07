@@ -11,6 +11,12 @@
             "type": "list",
             "default": []
     },
+    "群聊黑名单": {
+            "description": "群聊黑名单",
+            "hint": "屏蔽该群的所有消息，管理员除外",
+            "type": "list",
+            "default": []
+    },
     "自定义规则": {
         "description": "群聊自定义规则",
         "type": "template_list",

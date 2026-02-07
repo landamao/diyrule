@@ -1,5 +1,4 @@
 from pypinyin import lazy_pinyin
-
 from astrbot.api.all import Star, EventMessageType, event_message_type, logger, asyncio
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.core import AstrBotConfig
@@ -15,21 +14,22 @@ class 群自定义规则(Star):
         super().__init__(context)
         self.context = context
         self.config = config
-        self.l指令前缀 = config['指令前缀'] or ['/'] #不需要用get，因为是配置的项
-        self.规则列表 = config['自定义规则']
+        #只为更好的性能
+        self.l群聊黑名单 = tuple(config['群聊黑名单'])
+        self.l指令前缀 = tuple(config['指令前缀'] or ['/']) #不需要用get，因为是配置的项
+        self.规则列表 = tuple(config['自定义规则'])
         self.l所有指令 = config['额外指令'].copy() #安全复制
-        self.l所有指令 = self.获取所有指令()  #原本重载时也要获取，不冲突
+        self.l所有指令 = tuple(self.获取所有指令())  #原本重载时也要获取，不冲突
         logger.warning(f"\n\n所有{len(self.l所有指令)}个指令：\n{self.l所有指令}\n\n")
 
-        for 规则 in self.规则列表:
+        self.规则索引= {}
+        for 索引, 规则 in enumerate(self.规则列表):
             规则['群号'] = [ j.strip() for j in 规则['群号'] ]
+            for 群号 in 规则['群号']:
+                self.规则索引[群号] = 索引
 
-        # 由于群号是二维列表，需要扁平化处理
-        self.l启用群号 = []
-        for 规则 in self.规则列表:
-            if 规则['开关']:
-                for 群号 in 规则['群号']:
-                    self.l启用群号.append(群号.strip())
+        # 创建快速判断列表
+        self.l启用群号 = tuple(set([ 群号 for 规则 in self.规则列表 if 规则['开关'] for 群号 in 规则['群号'] ]))
 
         self.系统指令 = ( "llm", "t2i", "tts", "sid", "op", "wl", "dashboard_update", "alter_cmd", "provider",
             "model", "plugin", "plugin ls", "new", "switch", "rename", "del", "reset", "history", "persona",
@@ -44,12 +44,13 @@ class 群自定义规则(Star):
     @event_message_type(EventMessageType.GROUP_MESSAGE, priority=999)
     async def 主函数(self, event: AstrMessageEvent):
         if not (消息链 := event.get_messages()): return  # 可能会出现消息链为空的情况
-        if (群号 := event.get_group_id()) not in self.l启用群号:  return  #先快速判断是否在设定的规则群号里
+        群号 = event.get_group_id()
+        if (not event.is_admin()) and  (群号 in self.l群聊黑名单):
+            event.stop_event(); return
+        if 群号 not in self.l启用群号:  return  #先快速判断是否在设定的规则群号里
 
-        for 规则 in self.规则列表:
-            if  群号 in 规则['群号']: #找到该群号的规则
-                break
-        else: return
+        try: 规则 = self.规则列表[self.规则索引[群号]]
+        except Exception as e: logger.error(f"发生意外错误：\n{str(e)}\n", exc_info=True); return
 
         唤醒 = False
         跳过 = False
@@ -59,7 +60,7 @@ class 群自定义规则(Star):
         for 前缀 in self.l指令前缀:
             if 消息文本.startswith(前缀):
                 if event.is_admin(): return  #管理员不受影响
-                指令文本 = (消息文本[len(前缀):].split() or [''])[0]  #不知道什么原因抽风了，气死我了
+                指令文本 = (消息文本[len(前缀):].split() or [' '])[0]  #不知道什么原因抽风了，气死我了
                 if self.f指令屏蔽(规则, 指令文本): event.stop_event()
                 return
 
@@ -84,7 +85,7 @@ class 群自定义规则(Star):
             for seg in 消息链:
                 if 规则['艾特唤醒'] and isinstance(seg, At) and str(seg.qq) == event.get_self_id():
                     #新增艾特指令处理
-                    if self.f指令屏蔽(规则, (消息文本.split() or [''])[0], 禁前=False): event.stop_event(); return
+                    if self.f指令屏蔽(规则, (消息文本.split() or [' '])[0], 禁前=False): event.stop_event(); return
                     logger.info('触发了艾特唤醒')
                     唤醒 = True
                     break
@@ -147,7 +148,7 @@ class 群自定义规则(Star):
                     # 获取别名 - 属性名是 alias，类型是 set
                     if hasattr(i, 'alias') and i.alias:  l指令.extend(list(i.alias))
                 elif isinstance(i, CommandGroupFilter):  l指令.append(i.group_name)
-        所有指令 = list(set(l指令 + self.l所有指令)); 中文指令 = []; 英文指令 = []
+        所有指令 = list(set(l指令 + list(self.l所有指令))); 中文指令 = []; 英文指令 = []
         for 指令 in 所有指令:
             if 指令 and '\u4e00' <= 指令[0] <= '\u9fff':  中文指令.append(指令)
             else:  英文指令.append(指令)
